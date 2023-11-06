@@ -78,7 +78,6 @@ function scheduleCronJob(sectionId: string) {
 export async function fetchData(req: Request, res: Response, next: NextFunction) {
     try {
         const sectionId = req.params.sectionId;
-        console.log("asdsadas >> ", sectionId);
 
         if (sectionId.startsWith("-") || sectionId.endsWith("-")) {
             throw customError(
@@ -114,12 +113,15 @@ export async function fetchData(req: Request, res: Response, next: NextFunction)
             } else {
                 const apiUrl = `https://content.guardianapis.com/sections?q=${sectionId}&api-key=test`;
                 const response = await axios.get(apiUrl);
-                const resData = response.data.response.results
+                const resData = response.data.response.results;
                 if (resData.length === 0) {
                     throw customError('Invalid section name', 400)
                 }
                 await updateDatabase(response.data.response.results);
                 const section = await repo.sectionRepo.findOne({ where: { sectionId: sectionId }, relations: ['editions'] }) as Section;
+                if (section == null) {
+                    throw customError('Invalid section name', 400)
+                }
                 feed = new RSS({
                     title: sectionId,
                     custom_elements: [
